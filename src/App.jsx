@@ -127,18 +127,13 @@ function App() {
               <div className="category-items">
                 {categoryNotes.map(note => (
                   <div key={note.id} className="note-card">
-                    <div className="note-header">
-                      <div>
-                        <span className="note-time">
-                          <Clock size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                          {formatDate(note.timestamp)}
-                        </span>
-                      </div>
-                      <button className="btn-delete" onClick={() => deleteNote(note.id)} title="노트 삭제">
-                        <Trash2 size={14} />
-                      </button>
+                    <div className="note-time">
+                      {formatDate(note.timestamp)}
                     </div>
                     <div className="note-content">{note.translation}</div>
+                    <button className="btn-delete" onClick={() => deleteNote(note.id)} title="노트 삭제">
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 ))}
               </div>
