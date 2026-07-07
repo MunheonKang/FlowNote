@@ -108,21 +108,40 @@ function App() {
     <div className="app-container">
       <main className="main-content">
         <section className="notes-list">
-          {[...notes].reverse().map(note => (
-            <div key={note.id} className="note-card">
-              <div className="note-header">
-                <div>
-                  <span className="note-category">{note.category}</span>
-                  <span className="note-time" style={{ marginLeft: '10px' }}>
-                    <Clock size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                    {formatDate(note.timestamp)}
-                  </span>
-                </div>
-                <button className="btn-delete" onClick={() => deleteNote(note.id)} title="노트 삭제">
-                  <Trash2 size={14} />
-                </button>
+          {notes.length === 0 && (
+            <div className="empty-state">
+              작성된 메모가 없습니다. 아래에 첫 메모를 남겨보세요!
+            </div>
+          )}
+          
+          {Object.entries(
+            notes.reduce((acc, note) => {
+              const cat = note.category || 'Uncategorized';
+              if (!acc[cat]) acc[cat] = [];
+              acc[cat].push(note);
+              return acc;
+            }, {})
+          ).map(([category, categoryNotes]) => (
+            <div key={category} className="category-group">
+              <h2 className="category-title">{category}</h2>
+              <div className="category-items">
+                {categoryNotes.map(note => (
+                  <div key={note.id} className="note-card">
+                    <div className="note-header">
+                      <div>
+                        <span className="note-time">
+                          <Clock size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                          {formatDate(note.timestamp)}
+                        </span>
+                      </div>
+                      <button className="btn-delete" onClick={() => deleteNote(note.id)} title="노트 삭제">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="note-content">{note.translation}</div>
+                  </div>
+                ))}
               </div>
-              <div className="note-content">{note.translation}</div>
             </div>
           ))}
         </section>

@@ -145,15 +145,24 @@
   margin-bottom: 1rem;
 }
 
-.note-category {
-  background: rgba(139, 92, 246, 0.2);
+.category-group {
+  margin-bottom: 2rem;
+}
+
+.category-title {
+  font-size: 1.2rem;
   color: #c4b5fd;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  margin: 0 0 1rem 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #27272a;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+}
+
+.category-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .note-time {
