@@ -27,6 +27,12 @@ function App() {
     setNotes(prev => prev.filter(note => note.id !== id));
   };
 
+  const toggleComplete = (id) => {
+    setNotes(prev => prev.map(note => 
+      note.id === id ? { ...note, completed: !note.completed } : note
+    ));
+  };
+
   const processNote = async () => {
     if (!noteText.trim()) return;
     if (!apiKey) {
@@ -130,7 +136,19 @@ function App() {
                     <div className="note-time">
                       {formatDate(note.timestamp)}
                     </div>
-                    <div className="note-content">{note.translation}</div>
+                    <div className="note-content">
+                      {category.toLowerCase() === 'todo' && (
+                        <input 
+                          type="checkbox" 
+                          className="todo-checkbox"
+                          checked={!!note.completed}
+                          onChange={() => toggleComplete(note.id)}
+                        />
+                      )}
+                      <span className={note.completed ? 'completed-text' : ''}>
+                        {note.translation}
+                      </span>
+                    </div>
                     <button className="btn-delete" onClick={() => deleteNote(note.id)} title="노트 삭제">
                       <Trash2 size={14} />
                     </button>
