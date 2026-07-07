@@ -1,0 +1,4 @@
+# FlowNote Project Guidelines
+
+## 1. Auto Git Commit
+Whenever the AI agent (Antigravity) makes significant modifications, feature additions, or bug fixes to the codebase, the agent MUST automatically run `git add .` and `git commit -m "[summary of changes]"` at the end of the turn without asking for explicit permission.
