@@ -39,7 +39,13 @@ function App() {
 
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-flash-lite-latest",
+        generationConfig: {
+          responseMimeType: "application/json",
+          maxOutputTokens: 500,
+        }
+      });
 
       const prompt = `
         You are a productivity assistant. 
