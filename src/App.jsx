@@ -144,13 +144,17 @@ function App() {
   return (
     <div className="app-container">
       <main className="main-content">
-        {user && (
-          <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
+        <header className="app-header" style={{ padding: '1.2rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+            <img src="/favicon.svg" alt="FlowNote Logo" style={{ width: '28px', height: '28px', borderRadius: '8px' }} />
+            <h1 style={{ fontSize: '1.4rem', margin: 0, background: 'linear-gradient(135deg, #a78bfa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 800, letterSpacing: '-0.5px' }}>FlowNote</h1>
+          </div>
+          {user && (
             <button className="btn-icon" onClick={handleLogout} title="로그아웃" style={{ opacity: 1, padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }}>
               <LogOut size={18} />
             </button>
-          </div>
-        )}
+          )}
+        </header>
         {!user ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '2rem', padding: '2rem', textAlign: 'center' }}>
             <h2 style={{ color: '#e2e8f0', margin: 0, fontSize: '1.8rem' }}>나만의 비밀 노트</h2>
