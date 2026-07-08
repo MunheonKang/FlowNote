@@ -1,21 +1,28 @@
 import { useState, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Sparkles, Send, KeyRound, Clock, Trash2 } from 'lucide-react';
+import { Sparkles, Send, KeyRound, Clock, Trash2, Pencil, Tag } from 'lucide-react';
+import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from './firebase';
 import './App.css';
 
 function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [noteText, setNoteText] = useState('');
-  const [notes, setNotes] = useState(() => {
-    const saved = localStorage.getItem('flownote_notes');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [notes, setNotes] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('flownote_notes', JSON.stringify(notes));
-  }, [notes]);
+    const q = query(collection(db, 'notes'), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setNotes(notesData);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const saveApiKey = (e) => {
     const key = e.target.value;
@@ -23,14 +30,45 @@ function App() {
     localStorage.setItem('gemini_api_key', key);
   };
 
-  const deleteNote = (id) => {
-    setNotes(prev => prev.filter(note => note.id !== id));
+  const deleteNote = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'notes', id));
+    } catch (err) {
+      console.error("Error deleting note:", err);
+    }
   };
 
-  const toggleComplete = (id) => {
-    setNotes(prev => prev.map(note => 
-      note.id === id ? { ...note, completed: !note.completed } : note
-    ));
+  const toggleComplete = async (id) => {
+    const note = notes.find(n => n.id === id);
+    if (note) {
+      try {
+        await updateDoc(doc(db, 'notes', id), { completed: !note.completed });
+      } catch (err) {
+        console.error("Error updating note:", err);
+      }
+    }
+  };
+
+  const editCategory = async (id, currentCategory) => {
+    const newCategory = window.prompt("새로운 카테고리를 입력하세요:", currentCategory);
+    if (newCategory && newCategory.trim() !== "" && newCategory !== currentCategory) {
+      try {
+        await updateDoc(doc(db, 'notes', id), { category: newCategory.trim() });
+      } catch (err) {
+        console.error("Error updating category:", err);
+      }
+    }
+  };
+
+  const editContent = async (id, currentContent) => {
+    const newContent = window.prompt("수정할 내용을 입력하세요:", currentContent);
+    if (newContent !== null && newContent.trim() !== "" && newContent !== currentContent) {
+      try {
+        await updateDoc(doc(db, 'notes', id), { translation: newContent.trim() });
+      } catch (err) {
+        console.error("Error updating content:", err);
+      }
+    }
   };
 
   const processNote = async () => {
@@ -71,15 +109,13 @@ function App() {
       const cleanedText = text.replace(/```json\n?|\n?```/g, '');
       const data = JSON.parse(cleanedText);
 
-      const newNote = {
-        id: crypto.randomUUID(),
+      await addDoc(collection(db, 'notes'), {
         original: noteText,
         category: data.category,
         translation: data.translation,
-        timestamp: new Date().toISOString()
-      };
-
-      setNotes(prev => [newNote, ...prev]);
+        timestamp: new Date().toISOString(),
+        completed: false
+      });
       setNoteText('');
       setErrorMessage('');
     } catch (error) {
@@ -149,9 +185,17 @@ function App() {
                         {note.translation}
                       </span>
                     </div>
-                    <button className="btn-delete" onClick={() => deleteNote(note.id)} title="노트 삭제">
-                      <Trash2 size={14} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn-delete" onClick={() => editCategory(note.id, category)} title="카테고리 수정" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                        <Tag size={14} color="#64748b" />
+                      </button>
+                      <button className="btn-delete" onClick={() => editContent(note.id, note.translation)} title="내용 수정" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                        <Pencil size={14} color="#64748b" />
+                      </button>
+                      <button className="btn-delete" onClick={() => deleteNote(note.id)} title="노트 삭제">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
