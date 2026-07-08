@@ -143,21 +143,14 @@ function App() {
 
   return (
     <div className="app-container">
-      <aside className="app-sidebar">
-        <div className="sidebar-header" style={{ justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-            <Sparkles size={24} color="#8b5cf6" />
-            <h1>FlowNote</h1>
-          </div>
-          {user && (
-            <button className="btn-icon" onClick={handleLogout} title="로그아웃" style={{ opacity: 1, padding: '8px' }}>
+      <main className="main-content">
+        {user && (
+          <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }}>
+            <button className="btn-icon" onClick={handleLogout} title="로그아웃" style={{ opacity: 1, padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }}>
               <LogOut size={18} />
             </button>
-          )}
-        </div>
-      </aside>
-
-      <main className="main-content">
+          </div>
+        )}
         {!user ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '2rem', padding: '2rem', textAlign: 'center' }}>
             <h2 style={{ color: '#e2e8f0', margin: 0, fontSize: '1.8rem' }}>나만의 비밀 노트</h2>
