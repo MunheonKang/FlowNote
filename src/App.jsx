@@ -148,6 +148,24 @@ function App() {
 
   return (
     <div className="app-container">
+      <aside className="app-sidebar">
+        <div className="sidebar-header">
+          <Sparkles size={24} color="#8b5cf6" />
+          <h1>FlowNote</h1>
+        </div>
+        
+        <div className="api-key-section">
+          <KeyRound size={16} color="#64748b" />
+          <input 
+            type="password" 
+            className="input-field api-input" 
+            placeholder="Gemini API Key" 
+            value={apiKey}
+            onChange={saveApiKey}
+          />
+        </div>
+      </aside>
+
       <main className="main-content">
         <section className="notes-list">
           {notes.length === 0 && (
@@ -169,9 +187,6 @@ function App() {
               <div className="category-items">
                 {categoryNotes.map(note => (
                   <div key={note.id} className="note-card">
-                    <div className="note-time">
-                      {formatDate(note.timestamp)}
-                    </div>
                     <div className="note-content">
                       {category.toLowerCase() === 'todo' && (
                         <input 
@@ -185,16 +200,20 @@ function App() {
                         {note.translation}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="btn-delete" onClick={() => editCategory(note.id, category)} title="카테고리 수정" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                        <Tag size={14} color="#64748b" />
-                      </button>
-                      <button className="btn-delete" onClick={() => editContent(note.id, note.translation)} title="내용 수정" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                        <Pencil size={14} color="#64748b" />
-                      </button>
-                      <button className="btn-delete" onClick={() => deleteNote(note.id)} title="노트 삭제">
-                        <Trash2 size={14} />
-                      </button>
+                    
+                    <div className="note-meta">
+                      <span className="note-time">{formatDate(note.timestamp)}</span>
+                      <div className="note-actions">
+                        <button className="btn-icon" onClick={() => editCategory(note.id, category)} title="카테고리 수정">
+                          <Tag size={14} />
+                        </button>
+                        <button className="btn-icon" onClick={() => editContent(note.id, note.translation)} title="내용 수정">
+                          <Pencil size={14} />
+                        </button>
+                        <button className="btn-icon btn-delete-icon" onClick={() => deleteNote(note.id)} title="노트 삭제">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -209,17 +228,6 @@ function App() {
               {errorMessage}
             </div>
           )}
-
-          <div className="api-key-section">
-            <KeyRound size={16} color="#64748b" />
-            <input 
-              type="password" 
-              className="input-field api-input" 
-              placeholder="Gemini API Key" 
-              value={apiKey}
-              onChange={saveApiKey}
-            />
-          </div>
 
           <div className="note-input-container">
             <textarea 
