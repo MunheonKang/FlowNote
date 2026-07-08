@@ -24,7 +24,7 @@ function App() {
       setNotes([]);
       return;
     }
-    const q = query(collection(db, 'notes'), where('uid', '==', user.uid), orderBy('timestamp', 'desc'));
+    const q = query(collection(db, 'notes'), where('uid', '==', user.uid), orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const notesData = snapshot.docs.map(doc => ({
         id: doc.id,
