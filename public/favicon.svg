@@ -1,25 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="gradPen" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a78bfa" />
-      <stop offset="100%" stop-color="#4f46e5" />
+    <!-- Base Gradient: Left (Yellow) to Right (Blue) -->
+    <linearGradient id="geminiBase" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#fbbc05"/>
+      <stop offset="100%" stop-color="#4285f4"/>
+    </linearGradient>
+    
+    <!-- Overlay Gradient: Top (Red) to Bottom (Green) -->
+    <linearGradient id="geminiOverlay" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ea4335" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#ea4335" stop-opacity="0"/>
+      <stop offset="60%" stop-color="#34a853" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#34a853" stop-opacity="1"/>
     </linearGradient>
   </defs>
+
   <rect width="512" height="512" rx="120" fill="#09090b"/>
 
-  <!-- AI Sparkle (Auto/Magic) -->
-  <path fill="#ffffff" d="M384,128 C384,160 416,176 448,176 C416,176 384,192 384,224 C384,192 352,176 320,176 C352,176 384,160 384,128 Z"/>
+  <!-- Gemini Sparkle (추가해주신 원본 이미지 사용) -->
+  <image href="gemini.webp" x="80" y="80" width="200" height="200" />
 
-  <!-- Pen shape (Handwriting) -->
-  <path d="M140,300 L260,180 A20,20 0 0,1 290,210 L170,330 Z" fill="url(#gradPen)"/>
-  <polygon points="140,300 170,330 110,360" fill="#6366f1"/>
-  <polygon points="135,320 150,335 110,360" fill="#ffffff"/>
-
-  <!-- Categorization (Folders / Tags / Organized Lines) -->
-  <rect x="280" y="260" width="120" height="32" rx="16" fill="#ec4899" />
-  <rect x="320" y="320" width="80" height="32" rx="16" fill="#3b82f6" />
-  <rect x="240" y="380" width="160" height="32" rx="16" fill="#10b981" />
-  
-  <!-- Swirl connecting pen to categories (Flow) -->
-  <path d="M110,360 C 100,450 200,450 220,396" fill="none" stroke="#a78bfa" stroke-width="8" stroke-linecap="round" stroke-dasharray="12 12"/>
+  <!-- Categorization Rectangles (우하단 대각선 계단식 배치) -->
+  <g fill="none" stroke-width="4" stroke-linejoin="round">
+    <!-- Pink Box -->
+    <rect x="260" y="220" width="160" height="48" rx="8" stroke="#ec4899" />
+    <!-- Blue Box -->
+    <rect x="320" y="290" width="110" height="48" rx="8" stroke="#3b82f6" />
+    <!-- Green Box -->
+    <rect x="250" y="360" width="150" height="48" rx="8" stroke="#10b981" />
+  </g>
 </svg>
