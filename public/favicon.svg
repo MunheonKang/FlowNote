@@ -1,11 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8b5cf6"/>
-      <stop offset="100%" stop-color="#4f46e5"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="120" fill="url(#bgGrad)"/>
+  <rect width="512" height="512" rx="120" fill="#09090b"/>
   <!-- Main central sparkle representing AI and Ideas -->
   <path fill="#ffffff" d="M256,80 C256,180 348,256 448,256 C348,256 256,332 256,432 C256,332 164,256 64,256 C164,256 256,180 256,80 Z"/>
   <!-- Secondary smaller sparkle -->
