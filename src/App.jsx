@@ -11,10 +11,12 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false);
     });
     return () => unsubscribeAuth();
   }, []);
@@ -140,6 +142,9 @@ function App() {
       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     }).format(date);
   };
+  if (authLoading) {
+    return <div className="app-container"></div>;
+  }
 
   return (
     <div className="app-container">
