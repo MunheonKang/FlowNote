@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Sparkles, Send, KeyRound, Clock, Trash2, Pencil, Tag } from 'lucide-react';
-import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from './firebase';
+import { Sparkles, Send, KeyRound, Clock, Trash2, Pencil, Tag, LogOut, LogIn } from 'lucide-react';
+import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { db, auth, googleProvider } from './firebase';
 import './App.css';
 
 function App() {
@@ -11,9 +12,21 @@ function App() {
   const [notes, setNotes] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'notes'), orderBy('timestamp', 'desc'));
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setNotes([]);
+      return;
+    }
+    const q = query(collection(db, 'notes'), where('uid', '==', user.uid), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const notesData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -22,7 +35,23 @@ function App() {
       setNotes(notesData);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user]);
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
 
   const saveApiKey = (e) => {
     const key = e.target.value;
@@ -114,7 +143,8 @@ function App() {
         category: data.category,
         translation: data.translation,
         timestamp: new Date().toISOString(),
-        completed: false
+        completed: false,
+        uid: user.uid
       });
       setNoteText('');
       setErrorMessage('');
@@ -149,25 +179,44 @@ function App() {
   return (
     <div className="app-container">
       <aside className="app-sidebar">
-        <div className="sidebar-header">
-          <Sparkles size={24} color="#8b5cf6" />
-          <h1>FlowNote</h1>
+        <div className="sidebar-header" style={{ justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+            <Sparkles size={24} color="#8b5cf6" />
+            <h1>FlowNote</h1>
+          </div>
+          {user && (
+            <button className="btn-icon" onClick={handleLogout} title="로그아웃" style={{ opacity: 1, padding: '8px' }}>
+              <LogOut size={18} />
+            </button>
+          )}
         </div>
         
-        <div className="api-key-section">
-          <KeyRound size={16} color="#64748b" />
-          <input 
-            type="password" 
-            className="input-field api-input" 
-            placeholder="Gemini API Key" 
-            value={apiKey}
-            onChange={saveApiKey}
-          />
-        </div>
+        {user && (
+          <div className="api-key-section">
+            <KeyRound size={16} color="#64748b" />
+            <input 
+              type="password" 
+              className="input-field api-input" 
+              placeholder="Gemini API Key" 
+              value={apiKey}
+              onChange={saveApiKey}
+            />
+          </div>
+        )}
       </aside>
 
       <main className="main-content">
-        <section className="notes-list">
+        {!user ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '2rem', padding: '2rem', textAlign: 'center' }}>
+            <h2 style={{ color: '#e2e8f0', margin: 0, fontSize: '1.8rem' }}>나만의 비밀 노트</h2>
+            <p style={{ color: '#94a3b8', margin: 0 }}>메모를 보호하려면 구글 계정으로 안전하게 로그인하세요.</p>
+            <button onClick={handleLogin} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.8rem 1.5rem', background: '#e2e8f0', color: '#0f0f11', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+              <LogIn size={20} /> 구글 계정으로 로그인
+            </button>
+          </div>
+        ) : (
+          <>
+            <section className="notes-list">
           {notes.length === 0 && (
             <div className="empty-state">
               작성된 메모가 없습니다. 아래에 첫 메모를 남겨보세요!
@@ -252,6 +301,8 @@ function App() {
             </button>
           </div>
         </section>
+        </>
+        )}
       </main>
     </div>
   );
