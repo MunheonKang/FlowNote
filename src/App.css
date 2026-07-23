@@ -297,6 +297,7 @@
   color: #94a3b8;
   cursor: pointer;
   font-size: 0.9rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -314,7 +315,6 @@
   color: #a5b4fc;
   border-bottom: 1px solid #18181b;
   margin-bottom: -1px;
-  font-weight: 500;
 }
 
 .close-tab {
