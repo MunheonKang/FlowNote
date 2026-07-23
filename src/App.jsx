@@ -231,6 +231,36 @@ function App() {
     }
   };
 
+  const renameTab = async (oldName) => {
+    const newName = window.prompt("새 탭 이름을 입력하세요:", oldName);
+    if (!newName || newName.trim() === "" || newName === oldName) return;
+    
+    const trimmedName = newName.trim();
+    if (openTabs.includes(trimmedName)) {
+      alert("이미 존재하는 탭 이름입니다.");
+      return;
+    }
+
+    // 1. Update tabs array
+    const newTabs = openTabs.map(t => t === oldName ? trimmedName : t);
+    updateTabsInDb(newTabs);
+
+    // 2. Update active tab if currently active
+    if (activeTab === oldName) {
+      setActiveTab(trimmedName);
+    }
+
+    // 3. Update all notes in this tab
+    const notesToUpdate = notes.filter(n => (n.tab || '기본 탭') === oldName);
+    for (const note of notesToUpdate) {
+      try {
+        await updateDoc(doc(db, 'notes', note.id), { tab: trimmedName });
+      } catch (e) {
+        console.error("Failed to update note tab:", e);
+      }
+    }
+  };
+
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData('tabIndex', index);
   };
@@ -273,10 +303,15 @@ function App() {
                   key={tab} 
                   className={`tab ${activeTab === tab ? 'active-tab' : ''}`}
                   onClick={() => setActiveTab(tab)}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    renameTab(tab);
+                  }}
                   draggable
                   onDragStart={(e) => handleDragStart(e, index)}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, index)}
+                  title="더블클릭하여 이름 변경"
                 >
                   <GripHorizontal size={14} className="drag-handle" style={{ cursor: 'grab', opacity: 0.5 }} />
                   {tab}
