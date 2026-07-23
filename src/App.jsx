@@ -170,6 +170,7 @@ function App() {
   };
 
   const uniqueTabs = ['All', ...new Set(notes.map(n => n.tab || '기본 탭'))];
+  const allKnownTabs = Array.from(new Set([...uniqueTabs, ...openTabs]));
 
   const handleCategoryClick = (cat) => {
     if (!openTabs.includes(cat)) {
@@ -215,7 +216,7 @@ function App() {
         <>
           <main className="main-content">
             <div className="tabs-container">
-              {Array.from(new Set([...uniqueTabs, ...openTabs])).map(tab => (
+              {allKnownTabs.map(tab => (
                 <div 
                   key={tab} 
                   className={`tab ${activeTab === tab ? 'active-tab' : ''}`}
@@ -281,7 +282,7 @@ function App() {
                               title="다른 탭으로 이동"
                             >
                               <option value="" disabled>이동 ▾</option>
-                              {uniqueTabs.filter(t => t !== 'All' && t !== (note.tab || '기본 탭')).map(t => (
+                              {allKnownTabs.filter(t => t !== 'All' && t !== (note.tab || '기본 탭')).map(t => (
                                 <option key={t} value={t}>{t}</option>
                               ))}
                               <option value="new">+ 새 탭 입력...</option>
