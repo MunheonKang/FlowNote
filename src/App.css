@@ -347,3 +347,18 @@
   color: #e2e8f0;
   border-color: #64748b;
 }
+
+.tab-select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  padding-right: 6px;
+}
+
+.tab-select option {
+  background: #18181b;
+  color: #e2e8f0;
+}

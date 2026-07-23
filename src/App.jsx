@@ -75,11 +75,22 @@ function App() {
     }
   };
 
-  const editCategory = async (id, currentCategory) => {
-    const newCategory = window.prompt("새로운 카테고리를 입력하세요:", currentCategory);
-    if (newCategory && newCategory.trim() !== "" && newCategory !== currentCategory) {
+  const moveNote = async (id, currentCategory, newCategory) => {
+    if (newCategory === 'new') {
+      const promptCat = window.prompt("이동할 새 탭의 이름을 입력하세요:", currentCategory);
+      if (promptCat && promptCat.trim() !== "" && promptCat !== currentCategory) {
+        try {
+          await updateDoc(doc(db, 'notes', id), { category: promptCat.trim() });
+          if (!openTabs.includes(promptCat.trim())) {
+            setOpenTabs([...openTabs, promptCat.trim()]);
+          }
+        } catch (err) {
+          console.error("Error updating category:", err);
+        }
+      }
+    } else if (newCategory && newCategory !== currentCategory) {
       try {
-        await updateDoc(doc(db, 'notes', id), { category: newCategory.trim() });
+        await updateDoc(doc(db, 'notes', id), { category: newCategory });
       } catch (err) {
         console.error("Error updating category:", err);
       }
@@ -248,9 +259,18 @@ function App() {
                         <div className="note-meta">
                           <span className="note-time">{formatDate(note.timestamp)}</span>
                           <div className="note-actions">
-                            <button className="btn-icon" onClick={() => editCategory(note.id, category)} title="카테고리 수정">
-                              <Tag size={14} />
-                            </button>
+                            <select
+                              className="btn-icon tab-select"
+                              value=""
+                              onChange={(e) => moveNote(note.id, category, e.target.value)}
+                              title="다른 탭으로 이동"
+                            >
+                              <option value="" disabled>이동 ▾</option>
+                              {uniqueCategories.filter(c => c !== 'All' && c !== category).map(c => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                              <option value="new">+ 새 탭 입력...</option>
+                            </select>
                             <button className="btn-icon" onClick={() => editContent(note.id, note.translation)} title="내용 수정">
                               <Pencil size={14} />
                             </button>
