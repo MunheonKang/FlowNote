@@ -1,16 +1,35 @@
-# React + Vite
+# FlowNote (나만의 비밀 노트)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+## 📌 프로젝트 개요
+FlowNote는 Google 계정 연동을 통해 사용자의 메모를 안전하게 저장하고 관리할 수 있는 개인용 웹 기반 메모 애플리케이션입니다.
+최신 트렌드의 다크 모드 UI와 커스텀 탭(워크스페이스) 시스템을 제공하여, 용도에 따라 메모를 깔끔하게 분류하고 관리할 수 있습니다.
 
-Currently, two official plugins are available:
+## 🛠 기술 스택
+- **프론트엔드**: React, Vite, CSS3 (Flexbox/Grid 기반 반응형 레이아웃)
+- **백엔드 & 데이터베이스**: Firebase Authentication (Google 로그인), Firebase Firestore (실시간 NoSQL 데이터베이스)
+- **아이콘**: Lucide-React
+- **배포 지원 환경**: 모바일 및 데스크톱 웹 환경 호환
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ 주요 기능
+1. **Google 로그인 연동 (보안)**: 로그인한 사용자 본인의 데이터(`uid` 기준)만 읽고 쓸 수 있도록 Firebase 보안 규칙 적용.
+2. **실시간 데이터 동기화**: Firestore의 `onSnapshot`을 이용하여 데스크톱, 모바일 등 다중 기기에서 데이터가 실시간으로 연동됨.
+3. **고급 탭(Tab) 관리 시스템**:
+   - **탭 생성 및 관리**: 우측의 `+` 버튼으로 무한대로 탭 생성 가능.
+   - **이름 변경**: 탭을 **더블 클릭**하여 이름을 쉽게 변경 (해당 탭에 속한 메모들의 소속도 자동 업데이트).
+   - **드래그 앤 드롭 정렬**: 탭을 꾹 눌러 드래그하는 방식으로 직관적인 순서 변경 가능.
+   - **메모 이동**: 작성된 메모 카드의 옵션(또는 하단)을 통해 다른 탭으로 자유롭게 메모 이동 가능.
+4. **Firebase 규칙 우회 (설정 저장 로직)**:
+   - 보통 `notes` 컬렉션에만 쓰기 권한이 부여되는 Firebase 보안 규칙의 한계를 극복하기 위해, 사용자의 '탭 목록과 순서' 설정 데이터를 `user_settings` 컬렉션 대신 `notes` 컬렉션 내부에 특수 문서(`isSettings: true`) 형태로 몰래 숨겨서 저장하고 불러오도록 설계됨.
 
-## React Compiler
+## 🐛 최근 해결된 이슈 및 UI 개선 사항 (작업 히스토리)
+- **모바일 높이 및 잘림 버그 수정**: 키보드 활성화 시 브라우저가 레이아웃을 위로 밀어내어 탭이 화면 밖으로 사라지는 현상을 방지하기 위해 `html, body` 및 `#root`를 `height: 100%; overflow: hidden;`으로 강력하게 고정. (`100dvh` 적용)
+- **레이아웃 수축/팽창 (Flexbox 버그) 수정**: 
+  - 메모가 많아질 때 Flexbox 특성상 상단의 탭 구역(`tabs-container`)이 세로로 찌그러지며 가려지는 현상을 `flex-shrink: 0;`으로 해결.
+  - 메모가 없을 때 좌우 너비가 축소되는 현상을 방지하기 위해 `main-content`에 `min-width: 0; width: 100%;` 적용.
+- **가로 스크롤바 겹침 방지**: 모바일 환경에서 탭이 많아졌을 때 나타나는 하단 스크롤바가 탭 텍스트를 덮어버리지 않도록 CSS(`scrollbar-width: none`, `::-webkit-scrollbar { display: none; }`)로 투명하게 숨김 처리.
+- **활성 탭 시각적 강조**: 활성화된 탭을 한눈에 알아볼 수 있도록 텍스트를 흰색(#ffffff)으로 칠하고, 탭 상단에 보라색~파란색 계열의 그라데이션 포인트 라인을 추가하여 프리미엄한 느낌을 줌.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## 🚀 다음 작업자를 위한 가이드 (Next Steps)
+- **현재 구조**: 모든 핵심 로직(상태 관리, Firestore 연동, UI 렌더링, 탭 로직 등)이 `src/App.jsx` 파일에 집중되어 있습니다. CSS는 `src/App.css`와 `src/index.css`로 분리되어 있습니다.
+- **유지보수 포인트**: 향후 프로젝트 규모가 커지면 `App.jsx`를 탭 관리 컨텍스트(Context API)와 각 컴포넌트(메모 리스트, 입력창, 사이드바/탭 헤더 등) 단위로 리팩토링(모듈화)하는 것을 권장합니다.
+- **데이터베이스 인덱싱**: 메모의 정렬(`orderBy('timestamp', 'asc')`)과 필터링(`where('uid', '==', user.uid)`)을 동시에 수행하므로, Firebase Console에서 복합 인덱스(Composite Index)가 설정되어 있어야 완벽하게 동작합니다.
