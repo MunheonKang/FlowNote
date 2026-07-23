@@ -164,6 +164,14 @@ function App() {
       setActiveTab(newTabs[newTabs.length - 1] || 'All');
     }
   };
+
+  const addNewTab = () => {
+    const tabName = window.prompt("새 탭의 이름을 입력하세요:");
+    if (tabName && tabName.trim() !== "" && !openTabs.includes(tabName.trim())) {
+      setOpenTabs([...openTabs, tabName.trim()]);
+      setActiveTab(tabName.trim());
+    }
+  };
   if (authLoading) {
     return <div className="app-container"></div>;
   }
@@ -182,26 +190,6 @@ function App() {
         </main>
       ) : (
         <>
-          <aside className="app-sidebar">
-            <div className="sidebar-header">
-              <h1>FlowNote</h1>
-            </div>
-            <div className="sidebar-menu">
-              <h3 className="sidebar-title">Categories</h3>
-              <ul className="category-list">
-                {uniqueCategories.map(cat => (
-                  <li 
-                    key={cat} 
-                    className={`category-item ${activeTab === cat ? 'active' : ''}`}
-                    onClick={() => handleCategoryClick(cat)}
-                  >
-                    {cat === 'All' ? '모든 메모' : cat}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-
           <main className="main-content">
             <div className="tabs-container">
               {openTabs.map(tab => (
@@ -216,6 +204,9 @@ function App() {
                   )}
                 </div>
               ))}
+              <div className="tab add-tab-btn" onClick={addNewTab}>
+                + 새 탭
+              </div>
             </div>
 
             <section className="notes-list">
