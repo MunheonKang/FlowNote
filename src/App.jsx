@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Send, Clock, Trash2, Pencil, Tag, LogOut, LogIn, GripHorizontal } from 'lucide-react';
-import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, updateDoc, setDoc, doc, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth, googleProvider } from './firebase';
 import './App.css';
@@ -13,15 +13,9 @@ function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   
-  const [openTabs, setOpenTabs] = useState(() => {
-    const saved = localStorage.getItem('flowNoteTabs');
-    return saved ? JSON.parse(saved) : ['기본 탭'];
-  });
-  const [activeTab, setActiveTab] = useState(openTabs[0] || '기본 탭');
-
-  useEffect(() => {
-    localStorage.setItem('flowNoteTabs', JSON.stringify(openTabs));
-  }, [openTabs]);
+  const [openTabs, setOpenTabs] = useState(['기본 탭']);
+  const [activeTab, setActiveTab] = useState('기본 탭');
+  const [tabsLoaded, setTabsLoaded] = useState(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -30,6 +24,31 @@ function App() {
     });
     return () => unsubscribeAuth();
   }, []);
+
+  // Sync tabs from Firestore user_settings
+  useEffect(() => {
+    if (!user) {
+      setOpenTabs(['기본 탭']);
+      setTabsLoaded(false);
+      return;
+    }
+    const unsub = onSnapshot(doc(db, 'user_settings', user.uid), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().tabs && docSnap.data().tabs.length > 0) {
+        setOpenTabs(docSnap.data().tabs);
+      } else {
+        setOpenTabs(['기본 탭']);
+      }
+      setTabsLoaded(true);
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Ensure activeTab is valid when openTabs changes
+  useEffect(() => {
+    if (tabsLoaded && !openTabs.includes(activeTab)) {
+      setActiveTab(openTabs[0] || '기본 탭');
+    }
+  }, [openTabs, activeTab, tabsLoaded]);
 
   useEffect(() => {
     if (!user) {
@@ -47,19 +66,27 @@ function App() {
     return () => unsubscribe();
   }, [user]);
 
-  // Sync new tabs from other devices to the end of openTabs
+  const updateTabsInDb = async (newTabs) => {
+    if (!user) return;
+    setOpenTabs(newTabs); // Optimistic UI
+    try {
+      await setDoc(doc(db, 'user_settings', user.uid), { tabs: newTabs }, { merge: true });
+    } catch (err) {
+      console.error("Error updating tabs:", err);
+    }
+  };
+
+  // Sync new tabs from notes to openTabs
   useEffect(() => {
+    if (!tabsLoaded || !user) return;
     if (notes.length > 0) {
       const existingTabs = new Set(notes.map(n => n.tab || '기본 탭'));
-      setOpenTabs(prev => {
-        const newTabs = Array.from(existingTabs).filter(t => !prev.includes(t));
-        if (newTabs.length > 0) {
-          return [...prev, ...newTabs];
-        }
-        return prev;
-      });
+      const newTabs = Array.from(existingTabs).filter(t => !openTabs.includes(t));
+      if (newTabs.length > 0) {
+        updateTabsInDb([...openTabs, ...newTabs]);
+      }
     }
-  }, [notes]);
+  }, [notes, tabsLoaded, user]);
 
   const handleLogin = async () => {
     try {
@@ -114,7 +141,7 @@ function App() {
         try {
           await updateDoc(doc(db, 'notes', id), { tab: promptTab.trim() });
           if (!openTabs.includes(promptTab.trim())) {
-            setOpenTabs([...openTabs, promptTab.trim()]);
+            updateTabsInDb([...openTabs, promptTab.trim()]);
           }
         } catch (err) {
           console.error("Error updating tab:", err);
@@ -194,16 +221,14 @@ function App() {
     e.stopPropagation();
     if (openTabs.length <= 1) return; // Prevent closing the last tab
     const newTabs = openTabs.filter(t => t !== cat);
-    setOpenTabs(newTabs);
-    if (activeTab === cat) {
-      setActiveTab(newTabs[newTabs.length - 1]);
-    }
+    updateTabsInDb(newTabs);
   };
 
   const addNewTab = () => {
     const tabName = window.prompt("새 탭의 이름을 입력하세요:");
     if (tabName && tabName.trim() !== "" && !openTabs.includes(tabName.trim())) {
-      setOpenTabs([...openTabs, tabName.trim()]);
+      const newTabs = [...openTabs, tabName.trim()];
+      updateTabsInDb(newTabs);
       setActiveTab(tabName.trim());
     }
   };
@@ -218,7 +243,7 @@ function App() {
     const newTabs = [...openTabs];
     const [draggedTab] = newTabs.splice(dragIndex, 1);
     newTabs.splice(dropIndex, 0, draggedTab);
-    setOpenTabs(newTabs);
+    updateTabsInDb(newTabs);
   };
 
   const handleDragOver = (e) => {
