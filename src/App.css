@@ -279,6 +279,7 @@
   overflow-x: auto;
   border-bottom: 1px solid #27272a;
   scrollbar-width: none;
+  flex-shrink: 0;
 }
 
 .tabs-container::-webkit-scrollbar {
