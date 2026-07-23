@@ -25,24 +25,6 @@ function App() {
     return () => unsubscribeAuth();
   }, []);
 
-  // Sync tabs from Firestore user_settings
-  useEffect(() => {
-    if (!user) {
-      setOpenTabs(['기본 탭']);
-      setTabsLoaded(false);
-      return;
-    }
-    const unsub = onSnapshot(doc(db, 'user_settings', user.uid), (docSnap) => {
-      if (docSnap.exists() && docSnap.data().tabs && docSnap.data().tabs.length > 0) {
-        setOpenTabs(docSnap.data().tabs);
-      } else {
-        setOpenTabs(['기본 탭']);
-      }
-      setTabsLoaded(true);
-    });
-    return () => unsub();
-  }, [user]);
-
   // Ensure activeTab is valid when openTabs changes
   useEffect(() => {
     if (tabsLoaded && !openTabs.includes(activeTab)) {
@@ -53,15 +35,38 @@ function App() {
   useEffect(() => {
     if (!user) {
       setNotes([]);
+      setOpenTabs(['기본 탭']);
+      setTabsLoaded(false);
       return;
     }
     const q = query(collection(db, 'notes'), where('uid', '==', user.uid), orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      let settingsTabs = null;
+      const notesData = [];
+      
+      snapshot.docs.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.isSettings) {
+          settingsTabs = data.tabs;
+        } else {
+          notesData.push({ id: docSnap.id, ...data });
+        }
+      });
+      
       setNotes(notesData);
+      
+      if (settingsTabs && settingsTabs.length > 0) {
+        setOpenTabs(settingsTabs);
+      } else {
+        const existingTabs = new Set(notesData.map(n => n.tab || '기본 탭'));
+        setOpenTabs(prev => {
+          const combined = new Set([...prev, ...existingTabs]);
+          return Array.from(combined);
+        });
+      }
+      setTabsLoaded(true);
+    }, (error) => {
+      console.error("Firestore error:", error);
     });
     return () => unsubscribe();
   }, [user]);
@@ -70,23 +75,16 @@ function App() {
     if (!user) return;
     setOpenTabs(newTabs); // Optimistic UI
     try {
-      await setDoc(doc(db, 'user_settings', user.uid), { tabs: newTabs }, { merge: true });
+      await setDoc(doc(db, 'notes', `settings_${user.uid}`), { 
+        isSettings: true, 
+        uid: user.uid, 
+        tabs: newTabs,
+        timestamp: new Date(0).toISOString() // Earliest date so it doesn't break ordering
+      }, { merge: true });
     } catch (err) {
       console.error("Error updating tabs:", err);
     }
   };
-
-  // Sync new tabs from notes to openTabs
-  useEffect(() => {
-    if (!tabsLoaded || !user) return;
-    if (notes.length > 0) {
-      const existingTabs = new Set(notes.map(n => n.tab || '기본 탭'));
-      const newTabs = Array.from(existingTabs).filter(t => !openTabs.includes(t));
-      if (newTabs.length > 0) {
-        updateTabsInDb([...openTabs, ...newTabs]);
-      }
-    }
-  }, [notes, tabsLoaded, user]);
 
   const handleLogin = async () => {
     try {
