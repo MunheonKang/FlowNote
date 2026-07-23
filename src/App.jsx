@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Send, Clock, Trash2, Pencil, Tag, LogOut, LogIn } from 'lucide-react';
+import { Sparkles, Send, Clock, Trash2, Pencil, Tag, LogOut, LogIn, GripHorizontal } from 'lucide-react';
 import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth, googleProvider } from './firebase';
@@ -13,8 +13,15 @@ function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   
-  const [openTabs, setOpenTabs] = useState(['All']);
-  const [activeTab, setActiveTab] = useState('All');
+  const [openTabs, setOpenTabs] = useState(() => {
+    const saved = localStorage.getItem('flowNoteTabs');
+    return saved ? JSON.parse(saved) : ['기본 탭'];
+  });
+  const [activeTab, setActiveTab] = useState(openTabs[0] || '기본 탭');
+
+  useEffect(() => {
+    localStorage.setItem('flowNoteTabs', JSON.stringify(openTabs));
+  }, [openTabs]);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -39,6 +46,20 @@ function App() {
     });
     return () => unsubscribe();
   }, [user]);
+
+  // Sync new tabs from other devices to the end of openTabs
+  useEffect(() => {
+    if (notes.length > 0) {
+      const existingTabs = new Set(notes.map(n => n.tab || '기본 탭'));
+      setOpenTabs(prev => {
+        const newTabs = Array.from(existingTabs).filter(t => !prev.includes(t));
+        if (newTabs.length > 0) {
+          return [...prev, ...newTabs];
+        }
+        return prev;
+      });
+    }
+  }, [notes]);
 
   const handleLogin = async () => {
     try {
@@ -147,7 +168,7 @@ function App() {
         original: noteText,
         category: parsedData.category,
         translation: parsedData.translation,
-        tab: activeTab === 'All' ? '기본 탭' : activeTab,
+        tab: activeTab,
         timestamp: new Date().toISOString(),
         completed: false,
         uid: user.uid
@@ -169,23 +190,13 @@ function App() {
     }).format(date);
   };
 
-  const uniqueTabs = ['All', ...new Set(notes.map(n => n.tab || '기본 탭'))];
-  const allKnownTabs = Array.from(new Set([...uniqueTabs, ...openTabs]));
-
-  const handleCategoryClick = (cat) => {
-    if (!openTabs.includes(cat)) {
-      setOpenTabs([...openTabs, cat]);
-    }
-    setActiveTab(cat);
-  };
-
   const closeTab = (e, cat) => {
     e.stopPropagation();
-    if (cat === 'All') return; // Prevent closing All tab
+    if (openTabs.length <= 1) return; // Prevent closing the last tab
     const newTabs = openTabs.filter(t => t !== cat);
     setOpenTabs(newTabs);
     if (activeTab === cat) {
-      setActiveTab(newTabs[newTabs.length - 1] || 'All');
+      setActiveTab(newTabs[newTabs.length - 1]);
     }
   };
 
@@ -196,6 +207,24 @@ function App() {
       setActiveTab(tabName.trim());
     }
   };
+
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData('tabIndex', index);
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    const dragIndex = Number(e.dataTransfer.getData('tabIndex'));
+    if (dragIndex === dropIndex) return;
+    const newTabs = [...openTabs];
+    const [draggedTab] = newTabs.splice(dragIndex, 1);
+    newTabs.splice(dropIndex, 0, draggedTab);
+    setOpenTabs(newTabs);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
   if (authLoading) {
     return <div className="app-container"></div>;
   }
@@ -216,14 +245,19 @@ function App() {
         <>
           <main className="main-content">
             <div className="tabs-container">
-              {allKnownTabs.map(tab => (
+              {openTabs.map((tab, index) => (
                 <div 
                   key={tab} 
                   className={`tab ${activeTab === tab ? 'active-tab' : ''}`}
                   onClick={() => setActiveTab(tab)}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, index)}
                 >
-                  {tab === 'All' ? '모든 메모' : tab}
-                  {tab !== 'All' && (
+                  <GripHorizontal size={14} className="drag-handle" style={{ cursor: 'grab', opacity: 0.5 }} />
+                  {tab}
+                  {openTabs.length > 1 && (
                     <span className="close-tab" onClick={(e) => closeTab(e, tab)}>×</span>
                   )}
                 </div>
@@ -234,7 +268,7 @@ function App() {
             </div>
 
             <section className="notes-list">
-              {notes.length === 0 && (
+              {notes.filter(note => (note.tab || '기본 탭') === activeTab).length === 0 && (
                 <div className="empty-state">
                   작성된 메모가 없습니다. 아래에 첫 메모를 남겨보세요!
                 </div>
@@ -242,7 +276,7 @@ function App() {
               
               {Object.entries(
                 notes
-                  .filter(note => activeTab === 'All' || (note.tab || '기본 탭') === activeTab)
+                  .filter(note => (note.tab || '기본 탭') === activeTab)
                   .reduce((acc, note) => {
                     const cat = note.category || 'Uncategorized';
                     if (!acc[cat]) acc[cat] = [];
@@ -282,7 +316,7 @@ function App() {
                               title="다른 탭으로 이동"
                             >
                               <option value="" disabled>이동 ▾</option>
-                              {allKnownTabs.filter(t => t !== 'All' && t !== (note.tab || '기본 탭')).map(t => (
+                              {openTabs.filter(t => t !== (note.tab || '기본 탭')).map(t => (
                                 <option key={t} value={t}>{t}</option>
                               ))}
                               <option value="new">+ 새 탭 입력...</option>
@@ -312,7 +346,7 @@ function App() {
               <div className="note-input-container">
                 <textarea 
                   className="input-field note-textarea" 
-                  placeholder={activeTab === 'All' ? "무엇이든 자유롭게 적어보세요... (Ctrl+Enter)" : `[${activeTab}] 관련 메모를 적어보세요...`}
+                  placeholder={`[${activeTab}] 관련 메모를 적어보세요... (Ctrl+Enter)`}
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   onKeyDown={(e) => {
