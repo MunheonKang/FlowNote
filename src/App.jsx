@@ -75,24 +75,35 @@ function App() {
     }
   };
 
-  const moveNote = async (id, currentCategory, newCategory) => {
-    if (newCategory === 'new') {
-      const promptCat = window.prompt("이동할 새 탭의 이름을 입력하세요:", currentCategory);
-      if (promptCat && promptCat.trim() !== "" && promptCat !== currentCategory) {
-        try {
-          await updateDoc(doc(db, 'notes', id), { category: promptCat.trim() });
-          if (!openTabs.includes(promptCat.trim())) {
-            setOpenTabs([...openTabs, promptCat.trim()]);
-          }
-        } catch (err) {
-          console.error("Error updating category:", err);
-        }
-      }
-    } else if (newCategory && newCategory !== currentCategory) {
+  const editCategory = async (id, currentCategory) => {
+    const newCategory = window.prompt("새로운 카테고리를 입력하세요:", currentCategory);
+    if (newCategory && newCategory.trim() !== "" && newCategory !== currentCategory) {
       try {
-        await updateDoc(doc(db, 'notes', id), { category: newCategory });
+        await updateDoc(doc(db, 'notes', id), { category: newCategory.trim() });
       } catch (err) {
         console.error("Error updating category:", err);
+      }
+    }
+  };
+
+  const moveNote = async (id, currentTab, newTab) => {
+    if (newTab === 'new') {
+      const promptTab = window.prompt("이동할 새 탭의 이름을 입력하세요:");
+      if (promptTab && promptTab.trim() !== "" && promptTab !== currentTab) {
+        try {
+          await updateDoc(doc(db, 'notes', id), { tab: promptTab.trim() });
+          if (!openTabs.includes(promptTab.trim())) {
+            setOpenTabs([...openTabs, promptTab.trim()]);
+          }
+        } catch (err) {
+          console.error("Error updating tab:", err);
+        }
+      }
+    } else if (newTab && newTab !== currentTab) {
+      try {
+        await updateDoc(doc(db, 'notes', id), { tab: newTab });
+      } catch (err) {
+        console.error("Error updating tab:", err);
       }
     }
   };
@@ -136,6 +147,7 @@ function App() {
         original: noteText,
         category: parsedData.category,
         translation: parsedData.translation,
+        tab: activeTab === 'All' ? '기본 탭' : activeTab,
         timestamp: new Date().toISOString(),
         completed: false,
         uid: user.uid
@@ -157,7 +169,7 @@ function App() {
     }).format(date);
   };
 
-  const uniqueCategories = ['All', ...new Set(notes.map(n => n.category || 'Uncategorized'))];
+  const uniqueTabs = ['All', ...new Set(notes.map(n => n.tab || '기본 탭'))];
 
   const handleCategoryClick = (cat) => {
     if (!openTabs.includes(cat)) {
@@ -203,7 +215,7 @@ function App() {
         <>
           <main className="main-content">
             <div className="tabs-container">
-              {openTabs.map(tab => (
+              {Array.from(new Set([...uniqueTabs, ...openTabs])).map(tab => (
                 <div 
                   key={tab} 
                   className={`tab ${activeTab === tab ? 'active-tab' : ''}`}
@@ -229,7 +241,7 @@ function App() {
               
               {Object.entries(
                 notes
-                  .filter(note => activeTab === 'All' || (note.category || 'Uncategorized') === activeTab)
+                  .filter(note => activeTab === 'All' || (note.tab || '기본 탭') === activeTab)
                   .reduce((acc, note) => {
                     const cat = note.category || 'Uncategorized';
                     if (!acc[cat]) acc[cat] = [];
@@ -259,15 +271,18 @@ function App() {
                         <div className="note-meta">
                           <span className="note-time">{formatDate(note.timestamp)}</span>
                           <div className="note-actions">
+                            <button className="btn-icon" onClick={() => editCategory(note.id, category)} title="카테고리 수정">
+                              <Tag size={14} />
+                            </button>
                             <select
                               className="btn-icon tab-select"
                               value=""
-                              onChange={(e) => moveNote(note.id, category, e.target.value)}
+                              onChange={(e) => moveNote(note.id, note.tab || '기본 탭', e.target.value)}
                               title="다른 탭으로 이동"
                             >
                               <option value="" disabled>이동 ▾</option>
-                              {uniqueCategories.filter(c => c !== 'All' && c !== category).map(c => (
-                                <option key={c} value={c}>{c}</option>
+                              {uniqueTabs.filter(t => t !== 'All' && t !== (note.tab || '기본 탭')).map(t => (
+                                <option key={t} value={t}>{t}</option>
                               ))}
                               <option value="new">+ 새 탭 입력...</option>
                             </select>
