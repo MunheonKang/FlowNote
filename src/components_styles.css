@@ -1,0 +1,62 @@
+/* Additions for Inline Editing & Skeleton UI */
+.inline-edit-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.inline-small {
+  width: auto;
+}
+.inline-edit-input {
+  flex-grow: 1;
+  background: #18181b;
+  border: 1px solid #6366f1;
+  color: #e2e8f0;
+  border-radius: 4px;
+  padding: 0.4rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+}
+.small-input {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  width: 80px;
+}
+.inline-edit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* Skeleton Loading UI */
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.skeleton-category-title {
+  height: 24px;
+  width: 120px;
+  background: #27272a;
+  border-radius: 4px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+.skeleton-card {
+  padding: 1rem;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.skeleton-text {
+  height: 16px;
+  background: #27272a;
+  border-radius: 4px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+.skeleton-text-long { width: 90%; }
+.skeleton-text-medium { width: 60%; }
+.skeleton-text-short { width: 30%; }
